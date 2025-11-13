@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Carrinho - Sabor em Clicks</title>
+
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* utilitários já usados nesta página */
+    .hidden{display:none}
+    .steps{display:flex;gap:8px;margin:12px 0 6px}
+    .step{border:2px solid #ddd;background:#fff;border-radius:999px;padding:6px 12px;font-weight:800;cursor:default}
+    .step.is-active{border-color:#111;background:#111;color:#ffcc00}
+    .sum{display:grid;gap:4px;margin:12px 0}
+    .sum div{display:flex;justify-content:space-between}
+    .sum .big{font-weight:800;font-size:1.1rem}
+    .muted{color:#666;font-size:13px}
+
+    /* container dos cards (2 colunas responsivas) */
+    .option-group{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(220px,1fr));
+      gap:20px;
+      margin:20px 0;
+    }
+
+    /* CARD */
+    .option-card{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      padding:22px 16px;
+      border:2px solid #e5e5e5;
+      border-radius:18px;
+      background:#fff;
+      cursor:pointer;
+      transition:box-shadow .15s, transform .05s, border-color .15s;
+      min-height:220px;
+    }
+    .option-card:hover{ box-shadow:0 6px 14px rgba(0,0,0,.10); transform:translateY(-2px) }
+    .option-card.is-active{ border-color:#d32f2f; box-shadow:0 8px 18px rgba(0,0,0,.18) }
+    .option-card:focus-within{ outline:2px solid #000; outline-offset:3px }
+
+    .option-card .option-img{
+      width:120px; height:120px;
+      object-fit:contain;
+      border-radius:16px;
+      background:#fff;
+      border:1px solid #eee;
+      order:0;
+    }
+    .option-card input[type="radio"]{ position:absolute;opacity:0;pointer-events:none; }
+    .option-title{ font-weight:800; font-size:1.1rem; text-align:center; order:1; }
+
+    @media (max-width:680px){ .option-group{ grid-template-columns:1fr; } }
+
+    /* Loading (mini pop-up) */
+    .loading-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.5);
+      display:none; align-items:center; justify-content:center; z-index:9999;
+    }
+    .loading-box{
+      background:#fff; color:#111; border-radius:14px; padding:16px 18px;
+      display:flex; align-items:center; gap:12px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+      font-weight:800;
+    }
+    .spinner{
+      width:22px; height:22px; border:3px solid #eee; border-top-color:#111; border-radius:50%;
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin{ to { transform:rotate(360deg) } }
+  </style>
+</head>
+<body class="carrinho">
+  <header>
+    <nav class="wrap">
+      <h1 class="brand">Sabor em Clicks</h1>
+      <ul>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="cardapio.html">Cardápio</a></li>
+        <li>
+          <a href="carrinho.html" class="cart-link" aria-label="Carrinho">
+            🛒 <span id="cartCount"></span>
+          </a>
+        </li>
+
+        <!-- ÁREA DE CONTA (preenchida pelo auth) -->
+        <li class="account">
+          <a href="#" id="accountArea" aria-haspopup="true" aria-expanded="false">Entrar</a>
+          <div id="accountMenu" class="hidden" role="menu" aria-label="Menu da conta">
+            <a href="perfil.html" role="menuitem">Perfil</a>
+            <a href="#" id="btnLogout" role="menuitem">Sair</a>
+          </div>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="wrap" style="margin-top:18px;">
+    <!-- ETAPAS -->
+    <nav class="steps" aria-label="Etapas do checkout">
+      <span class="step is-active" data-step="1">1. Itens</span>
+      <span class="step" data-step="2">2. Entrega/Retirada</span>
+      <span class="step" data-step="3">3. Confirmação</span>
+    </nav>
+
+    <!-- ====== ETAPA 1: ITENS ====== -->
+    <section id="step1">
+      <div class="cart-header">
+        <h2>🛒 Seu Carrinho</h2>
+        <button class="remove-btn" id="btnLimpar">Limpar carrinho</button>
+      </div>
+
+      <div id="groups"></div>
+
+      <div class="sum">
+        <div><span>Subtotal</span><strong id="subtotal">R$ 0,00</strong></div>
+      </div>
+
+      <label for="obs">Observações do pedido:</label>
+      <textarea id="obs" rows="3" placeholder="Ex: sem cebola, maionese à parte" style="width:100%;"></textarea>
+
+      <div class="rowActions" style="justify-content:flex-end;margin-top:16px;">
+        <button class="btn-primary" id="goStep2">Continuar</button>
+      </div>
+    </section>
+
+    <!-- ====== ETAPA 2: ENTREGA / RETIRADA ====== -->
+    <section id="step2" class="hidden">
+      <h2>📍 Entrega ou Retirada</h2>
+
+      <div class="field">
+        <label><strong>Como deseja receber?</strong></label>
+
+        <!-- Cards com imagem -->
+        <div class="option-group" role="radiogroup" aria-label="Como deseja receber?">
+          <label class="option-card is-active" id="cardRetirada">
+            <input type="radio" name="metodo" id="optRetirada" value="retirada" checked>
+            <div class="option-title">Retirada no balcão</div>
+            <!-- AJUSTE: .png -> .jpg -->
+            <img class="option-img" src="imgs/icon-pickup.jpg" alt="Retirada no balcão" loading="lazy" decoding="async">
+          </label>
+
+          <label class="option-card" id="cardEntrega">
+            <input type="radio" name="metodo" id="optEntrega" value="entrega">
+            <div class="option-title">Entrega no endereço</div>
+            <!-- AJUSTE: .png -> .jpg -->
+            <img class="option-img" src="imgs/icon-delivery.jpg" alt="Entrega no endereço" loading="lazy" decoding="async">
+          </label>
+        </div>
+      </div>
+
+      <!-- erro geral desta etapa -->
+      <div id="formError" class="form-error" role="alert" aria-live="polite"></div>
+
+      <div id="addrFields" class="hidden" style="margin-top:6px;">
+        <div class="row">
+          <div class="field">
+            <label><strong>CEP</strong></label>
+            <input id="cep" inputmode="numeric" placeholder="00000-000" maxlength="9">
+            <small class="error"></small>
+          </div>
+          <div class="field">
+            <label><strong>Bairro</strong></label>
+            <input id="bairro" readonly>
+            <small class="error"></small>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label><strong>Logradouro</strong></label>
+            <input id="logradouro" readonly>
+            <small class="error"></small>
+          </div>
+          <div class="field">
+            <label><strong>Número</strong></label>
+            <input id="numero" placeholder="ex: 123">
+            <small class="error"></small>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label><strong>Cidade</strong></label>
+            <input id="cidade" readonly>
+            <small class="error"></small>
+          </div>
+          <div class="field">
+            <label><strong>UF</strong></label>
+            <input id="uf" readonly>
+            <small class="error"></small>
+          </div>
+        </div>
+
+        <div class="field">
+          <label><strong>Complemento</strong></label>
+          <input id="complemento" placeholder="Apto, bloco, referência...">
+          <small class="error"></small>
+        </div>
+
+        <div class="sum">
+          <div><span>Taxa de entrega</span><strong id="frete">R$ 0,00</strong></div>
+          <div><span>Estimativa</span><strong id="eta">—</strong></div>
+        </div>
+      </div>
+
+      <div class="rowActions" style="justify-content:space-between;margin-top:10px;">
+        <button id="backTo1" class="btn-ghost">Voltar</button>
+        <button id="goStep3" class="btn-primary">Ir para confirmação</button>
+      </div>
+    </section>
+
+    <!-- ====== ETAPA 3: CONFIRMAÇÃO ====== -->
+    <section id="step3" class="hidden">
+      <h2>✅ Confirmar Pedido</h2>
+
+      <div class="sum" style="margin-bottom:10px;">
+        <div><span>Subtotal</span><strong id="sumSubtotal">R$ 0,00</strong></div>
+        <div><span>Taxa de entrega</span><strong id="sumFrete">R$ 0,00</strong></div>
+        <div class="big"><span>Total</span><strong id="sumTotal">R$ 0,00</strong></div>
+      </div>
+
+      <section class="cart-section">
+        <h3>Recebimento</h3>
+        <div id="confirmMetodo" class="muted"></div>
+        <div id="confirmEndereco" class="muted" style="margin-top:6px;"></div>
+        <div id="confirmEta" class="muted" style="margin-top:6px;"></div>
+      </section>
+
+      <section class="cart-section">
+        <h3>Observações</h3>
+        <div id="confirmObs" class="muted">—</div>
+      </section>
+
+      <section class="cart-section">
+        <h3>Itens</h3>
+        <ul id="confirmItens" class="cart-list"></ul>
+      </section>
+
+      <!-- Ação principal: WhatsApp -->
+      <button id="btnEnviarWhats" class="btn-primary">Enviar pedido pelo WhatsApp</button>
+
+      <!-- Mensagem de sucesso -->
+      <div id="ok" class="success" style="display:none;margin-top:10px;">
+        ✅ Pedido enviado pelo WhatsApp! Vamos finalizar por lá. Redirecionando…
+      </div>
+
+      <div class="rowActions" style="justify-content:flex-start;margin-top:10px%;">
+        <button id="backTo2" class="btn-ghost">Voltar</button>
+      </div>
+    </section>
+
+    <p style="margin-top:14px;color:#777;font-size:13px;"></p>
+  </main>
+
+  <!-- Rodapé com links de conformidade -->
+  <footer>
+    <p>Endereço: R. Brooklin, 123 - São Paulo, SP</p>
+    <p>Telefone: (11) 97070-8215 • Email: saboremclicks@gmail.com</p>
+    <p>&copy; 2025 Sabor em Clicks. Todos os direitos reservados.</p>
+    <nav class="footer-links" style="margin-top:8px;">
+      <a href="privacidade.html">Política de Privacidade</a> |
+      <a href="termos.html">Termos de Uso</a> |
+      <a href="trocas.html">Política de Troca/Reembolso</a>
+    </nav>
+  </footer>
+
+  <!-- Banner de Cookies -->
+  <div id="cookies-bar" class="cookies-bar" style="display:none;">
+    Usamos cookies para melhorar sua experiência. Ao continuar, você concorda com nossa
+    <a href="privacidade.html" style="color:#ffcc00;">Política de Privacidade</a>.
+    <button id="acceptCookies" class="btn-ghost" style="margin-left:12px;border:1px solid #fff;">Aceitar</button>
+  </div>
+
+  <div id="toast" class="toast">Copiado!</div>
+
+  <!-- Mini pop-up de carregamento -->
+  <div id="loading" class="loading-backdrop" aria-hidden="true" style="display:none;">
+    <div class="loading-box">
+      <div class="spinner" aria-hidden="true"></div>
+      <span>Carregando…</span>
+    </div>
+  </div>
+
+  <!-- ====== Modal de Verificação de E-mail (para pedidos) ====== -->
+  <div id="modalVerify" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="verifyTitle" style="display:none;">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 id="verifyTitle" style="margin:0;">Verifique seu e-mail</h3>
+        <button class="btn btn-ghost" id="btnCloseVerify">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Para continuar com o pedido, confirme seu e-mail.</p>
+        <p>Clique em <strong>Reenviar verificação</strong> para receber um novo link na sua caixa de entrada.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btnResendVerify">Reenviar verificação</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== Scripts da página ====== -->
+  <script>
+    /* ========= Helpers ========= */
+    const $ = id => document.getElementById(id);
+    const brl = n => Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    const money = v => brl(v);
+    const KEY_CART = 'cart';
+    const getCart = () => JSON.parse(localStorage.getItem(KEY_CART) || '[]');
+    const setCart = c => localStorage.setItem(KEY_CART, JSON.stringify(c));
+
+    // WhatsApp destino (DDI+DDD+número, só dígitos)
+    const WHATSAPP_PHONE = "5511961747828";
+
+    const state = {
+      metodo: 'retirada',
+      frete: 0,
+      eta: '—',
+      address: { cep:'', logradouro:'', numero:'', bairro:'', cidade:'', uf:'', complemento:'' }
+    };
+
+    /* ========= UI refs ========= */
+    const cartCountEl = $('cartCount');
+    const groupsEl = $('groups');
+    const subtotalEl = $('subtotal');
+    const step1 = $('step1'), step2 = $('step2'), step3 = $('step3');
+    const stepDots = document.querySelectorAll('.step');
+    const goStep2 = $('goStep2'), goStep3 = $('goStep3');
+    const backTo1 = $('backTo1'), backTo2 = $('backTo2');
+
+    const cardRetirada = $('cardRetirada'), cardEntrega = $('cardEntrega');
+    const optRetirada = $('optRetirada'), optEntrega = $('optEntrega');
+
+    const addrFields = $('addrFields');
+    const formError = $('formError');
+    const cep = $('cep'), logradouro = $('logradouro'), numero = $('numero'), bairro = $('bairro'),
+          cidade = $('cidade'), uf = $('uf'), complemento = $('complemento');
+
+    const freteEl = $('frete'), etaEl = $('eta');
+    const sumSubtotal = $('sumSubtotal'), sumFrete = $('sumFrete'), sumTotal = $('sumTotal');
+
+    /* ========= Totais ========= */
+    const getSubtotal = () => getCart().reduce((s, p) => s + Number(p.price||0), 0);
+    const getGrandTotal = () => getSubtotal() + (state.metodo==='entrega' ? (state.frete||0) : 0);
+    function updateCartCount(){ const n = getCart().length; if (cartCountEl) cartCountEl.textContent = n || ''; }
+
+    function renderCart(){
+      const cart = getCart();
+      let subtotal = 0;
+      if (!cart.length){
+        groupsEl.innerHTML = '<p class="empty">Seu carrinho está vazio.</p>';
+        subtotalEl.textContent = money(0);
+        updateSummaries(); updateCartCount();
+        return;
+      }
+      const grouped = cart.reduce((a,p,i)=>{ (a[p.category||'Outros'] ??= []).push({...p,_idx:i}); return a; },{});
+      groupsEl.innerHTML = Object.entries(grouped).map(([cat,items])=>{
+        const lis = items.map(it=>{
+          subtotal += Number(it.price||0);
+          return `
+            <li data-item="${(it.item||'Item').replace(/"/g,'&quot;')}" data-qtd="1" data-price="${Number(it.price||0)}">
+              <span>${it.item} — ${money(it.price)}</span>
+              <button class="remove-btn js-rm" data-idx="${it._idx}">Remover</button>
+            </li>`;
+        }).join('');
+        return `
+          <div class="cart-section">
+            <h3>${cat}</h3>
+            <ul class="cart-list">${lis}</ul>
+          </div>`;
+      }).join('');
+      subtotalEl.textContent = money(subtotal);
+      updateSummaries(); updateCartCount();
+    }
+
+    groupsEl.addEventListener('click', e=>{
+      const btn = e.target.closest('.js-rm');
+      if (!btn) return;
+      const cart = getCart();
+      cart.splice(Number(btn.dataset.idx),1);
+      setCart(cart);
+      renderCart();
+    });
+
+    $('btnLimpar').addEventListener('click', ()=>{
+      localStorage.removeItem(KEY_CART);
+      localStorage.removeItem('orderNotes');
+      renderCart();
+    });
+
+    const obs = $('obs');
+    obs.value = localStorage.getItem('orderNotes') || '';
+    obs.addEventListener('input', ()=>localStorage.setItem('orderNotes', obs.value));
+
+    /* ========= Etapas ========= */
+    function setStep(n){
+      step1.classList.toggle('hidden', n!==1);
+      step2.classList.toggle('hidden', n!==2);
+      step3.classList.toggle('hidden', n!==3);
+      stepDots.forEach((d,i)=>d.classList.toggle('is-active', i===n-1));
+    }
+
+    // ======== BLOQUEIO: login + verificação ========
+    function getLocalUser(){
+      try { return JSON.parse(localStorage.getItem('sc_user') || 'null'); }
+      catch { return null; }
+    }
+    function openVerifyModal(){ const m=$('modalVerify'); if (m) m.style.display='flex'; }
+    function closeVerifyModal(){ const m=$('modalVerify'); if (m) m.style.display='none'; }
+    $('btnCloseVerify')?.addEventListener('click', closeVerifyModal);
+    $('btnResendVerify')?.addEventListener('click', async ()=>{
+      try{
+        if (window.resendVerificationEmail) {
+          await window.resendVerificationEmail();
+        } else {
+          alert('Não foi possível reenviar agora. Tente pelo seu Perfil.');
+        }
+      }catch{}
+    });
+    function requireVerifiedUser(){
+      const u = getLocalUser();
+      if (!u){
+        window.openAuthModal ? window.openAuthModal('login') : (document.getElementById('authModal')?.style && (document.getElementById('authModal').style.display='flex'));
+        return false;
+      }
+      if ((u.provider||'password').includes('password') && !u.emailVerified){
+        openVerifyModal();
+        return false;
+      }
+      return true;
+    }
+    // ======== FIM BLOQUEIO ========
+
+    // Step 1 -> Step 2
+    goStep2.addEventListener('click', ()=>{
+      if (!getCart().length) return alert('Seu carrinho está vazio.');
+      if (!requireVerifiedUser()) return;
+      setStep(2);
+    });
+
+    backTo1.addEventListener('click', ()=>setStep(1));
+    backTo2.addEventListener('click', ()=>setStep(2));
+
+    // Step 2 -> Step 3
+    goStep3.addEventListener('click', async ()=>{
+      if (!requireVerifiedUser()) return;
+      if (state.metodo==='entrega'){
+        const digits = (cep.value||'').replace(/\D/g,'');
+        if (digits.length===8 && !logradouro.value) await onCepInput();
+        if (!validateAddress()) return;
+      }
+      setStep(3);
+      updateSummaries();
+      fillConfirm();
+    });
+
+    /* ========= Entrega/Retirada ========= */
+    function setActiveCard(){
+      cardRetirada.classList.toggle('is-active', optRetirada.checked);
+      cardEntrega.classList.toggle('is-active', optEntrega.checked);
+    }
+    function showFormError(msg){ if (!msg) return; formError.textContent = msg; formError.style.display = 'block'; }
+    function clearErrors(container = step2){
+      container.querySelectorAll('.is-invalid').forEach(el=>el.classList.remove('is-invalid'));
+      container.querySelectorAll('.error').forEach(e=>{ e.textContent=''; e.style.display='none'; });
+      formError.textContent=''; formError.style.display='none';
+    }
+    const errOf = el => el.closest('.field')?.querySelector('.error');
+    function fieldError(el, msg){ el.classList.add('is-invalid'); const e = errOf(el); if (e){ e.textContent = msg; e.style.display='block'; } }
+
+    function validateAddress(){
+      clearErrors();
+      let ok = true;
+      const dcep = (cep.value||'').replace(/\D/g,'');
+      if (dcep.length!==8){ fieldError(cep,'Informe um CEP válido (8 dígitos).'); ok = false; }
+      if (!numero.value.trim()){ fieldError(numero,'Informe o número.'); ok = false; }
+      if (!logradouro.value.trim()){ fieldError(logradouro,'Confirme o logradouro (CEP).'); ok = false; }
+      if (!bairro.value.trim()){ fieldError(bairro,'Informe o bairro (CEP).'); ok = false; }
+      if (!cidade.value.trim()){ fieldError(cidade,'Informe a cidade (CEP).'); ok = false; }
+      if (!uf.value.trim()){ fieldError(uf,'Informe a UF (CEP).'); ok = false; }
+      if (!ok) showFormError('Preencha os campos obrigatórios destacados.');
+      return ok;
+    }
+
+    function toggleMetodo(){
+      state.metodo = optEntrega.checked ? 'entrega' : 'retirada';
+      addrFields.classList.toggle('hidden', state.metodo!=='entrega');
+      if (state.metodo!=='entrega'){ state.frete = 0; state.eta = '—'; etaEl.textContent='—'; clearErrors(); }
+      freteEl.textContent = money(state.frete||0);
+      updateSummaries();
+      setActiveCard();
+    }
+
+    cardRetirada.addEventListener('click', ()=>{
+      if (!optRetirada.checked){ optRetirada.checked = true; toggleMetodo(); }
+    });
+    cardEntrega.addEventListener('click', ()=>{
+      if (!optEntrega.checked){ optEntrega.checked = true; toggleMetodo(); }
+    });
+    optRetirada.addEventListener('change', toggleMetodo);
+    optEntrega.addEventListener('change', toggleMetodo);
+
+    [cep, numero, complemento].forEach(el=>{
+      ['input','change','blur'].forEach(evt=>{
+        el.addEventListener(evt, ()=>{
+          el.classList.remove('is-invalid');
+          const e = errOf(el); if (e){ e.textContent=''; e.style.display='none'; }
+          formError.style.display='none';
+        });
+      });
+    });
+
+    /* ===== CEP: timeout, fallback e edição manual ===== */
+    function fetchWithTimeout(url, { timeout = 7000, ...opts } = {}){
+      const ctrl = new AbortController();
+      const id = setTimeout(()=>ctrl.abort(), timeout);
+      return fetch(url, { ...opts, signal: ctrl.signal })
+        .finally(()=> clearTimeout(id));
+    }
+    function setAddrEditable(edit){
+      [logradouro, bairro, cidade, uf].forEach(el=>{
+        if (!el) return;
+        if (edit) el.removeAttribute('readonly');
+        else el.setAttribute('readonly','');
+      });
+    }
+    async function buscarCEP(cepRaw){
+      const clean = (cepRaw||'').replace(/\D/g,'');
+      if (clean.length!==8) throw new Error('CEP inválido');
+      try{
+        const r = await fetchWithTimeout(`https://viacep.com.br/ws/${clean}/json/`, { timeout: 6000 });
+        if (!r.ok) throw new Error('viaCEP indisponível');
+        const d = await r.json();
+        if (d.erro) throw new Error('CEP não encontrado');
+        return { logradouro: d.logradouro||'', bairro: d.bairro||'', cidade: d.localidade||'', uf: d.uf||'' };
+      }catch(_){
+        const r2 = await fetchWithTimeout(`https://brasilapi.com.br/api/cep/v2/${clean}`, { timeout: 6000 });
+        if (!r2.ok) throw new Error('CEP não encontrado');
+        const b = await r2.json();
+        return { logradouro: b.street||'', bairro: b.neighborhood||'', cidade: b.city||'', uf: b.state||'' };
+      }
+    }
+    function calcFretePorCEP(cep){
+      const prefix = (cep||'').replace(/\D/g,'').slice(0,3);
+      const tabela = {
+        '045': {taxa:7.90, eta:'30–40 min'},
+        '046': {taxa:9.90, eta:'35–50 min'},
+        '047': {taxa:12.90, eta:'45–60 min'}
+      };
+      return tabela[prefix] || {taxa:15.90, eta:'50–70 min'};
+    }
+    function applyAddressFields(d){
+      logradouro.value = d.logradouro||'';
+      bairro.value     = d.bairro||'';
+      cidade.value     = d.cidade||'';
+      uf.value         = d.uf||'';
+      state.address.logradouro = logradouro.value;
+      state.address.bairro     = bairro.value;
+      state.address.cidade     = cidade.value;
+      state.address.uf         = uf.value;
+    }
+    async function onCepInput(){
+      clearErrors();
+      const val = cep.value.trim();
+      const digits = val.replace(/\D/g,'');
+      if (digits.length < 8) return;
+      try{
+        const data = await buscarCEP(val);
+        applyAddressFields(data);
+        setAddrEditable(false);
+        state.address.cep = digits;
+        const f = calcFretePorCEP(digits);
+        state.frete = f.taxa; state.eta = f.eta;
+        freteEl.textContent = money(state.frete);
+        etaEl.textContent   = state.eta;
+        updateSummaries();
+      }catch(e){
+        setAddrEditable(true);
+        fieldError(cep, e.message || 'Falha ao buscar CEP');
+        showFormError('Não foi possível consultar o CEP agora. Preencha o endereço manualmente.');
+      }
+    }
+    cep.addEventListener('input', ()=>{
+      let v = cep.value.replace(/\D/g,'').slice(0,8);
+      if (v.length>5) v = v.slice(0,5) + '-' + v.slice(5);
+      cep.value = v;
+    });
+    cep.addEventListener('blur', onCepInput);
+
+    ['input','change'].forEach(evt=>{
+      numero.addEventListener(evt, ()=> state.address.numero = numero.value.trim());
+      complemento.addEventListener(evt, ()=> state.address.complemento = complemento.value);
+    });
+
+    function updateSummaries(){
+      sumSubtotal.textContent = money(getSubtotal());
+      sumFrete.textContent = money(state.metodo==='entrega' ? state.frete||0 : 0);
+      sumTotal.textContent = money(getGrandTotal());
+    }
+
+    /* ========= CONFIRMAÇÃO + WHATSAPP ========= */
+    function getItensLista(){
+      const arr = [];
+      document.querySelectorAll('#groups [data-item]').forEach(li=>{
+        const nome  = li.getAttribute('data-item') || 'Item';
+        const qtd   = Number(li.getAttribute('data-qtd') || 1);
+        const preco = Number(li.getAttribute('data-price') || 0);
+        arr.push({nome,qtd,preco});
+      });
+      if (arr.length) return arr;
+      getCart().forEach(it => arr.push({nome: it.item || 'Item', qtd: 1, preco: Number(it.price||0)}));
+      return arr;
+    }
+
+    function fillConfirm(){
+      const metodo = optEntrega?.checked ? "Entrega no endereço" : "Retirada no balcão";
+      $('confirmMetodo').textContent = `Forma de recebimento: ${metodo}`;
+      const endereco = (metodo === "Entrega no endereço")
+        ? `${logradouro?.value || ""}, ${numero?.value || ""} — ${bairro?.value || ""} — ${cidade?.value || ""}/${uf?.value || ""}${complemento?.value ? " ("+complemento.value+")" : ""}`
+        : "—";
+      $('confirmEndereco').textContent = `Endereço: ${endereco}`;
+      $('confirmEta').textContent      = `Estimativa: ${etaEl?.textContent || "—"}`;
+      $('confirmObs').textContent      = (obs?.value || "—").trim();
+
+      const ul = $('confirmItens'); ul.innerHTML = '';
+      getItensLista().forEach(it=>{
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${it.qtd}x ${it.nome}</span><strong>${money(it.preco * it.qtd)}</strong>`;
+        ul.appendChild(li);
+      });
+
+      updateSummaries();
+    }
+
+    // ID opcional para mensagem do WhatsApp
+    function genOrderId(){
+      return (Date.now().toString(36) + Math.random().toString(36).slice(2,6)).toUpperCase();
+    }
+    function buildOrderObject(){
+      const local = getLocalUser();
+      const uid = local?.uid || 'anon';
+      const itens = getItensLista();
+      return {
+        id: genOrderId(), // se não quiser ID na mensagem, remova esta linha e o uso no texto
+        uid,
+        date: new Date().toLocaleString('pt-BR'),
+        metodo: state.metodo,
+        entrega: state.metodo==='entrega' ? {
+          cep: (cep?.value||''),
+          logradouro: (logradouro?.value||''),
+          numero: (numero?.value||''),
+          bairro: (bairro?.value||''),
+          cidade: (cidade?.value||''),
+          uf: (uf?.value||''),
+          complemento: (complemento?.value||''),
+          eta: state.eta || ''
+        } : null,
+        obs: (obs?.value||'').trim(),
+        subtotal: getSubtotal(),
+        frete: state.metodo==='entrega' ? (state.frete||0) : 0,
+        total: getGrandTotal(),
+        itens: itens.map(i => ({ nome:i.nome, qtd:i.qtd||1, preco:i.preco||0 }))
+      };
+    }
+    function montarTextoWhats(order){
+      let userName = 'Convidado';
+      try{
+        const sc = JSON.parse(localStorage.getItem('sc_user') || 'null');
+        if (sc?.displayName) userName = sc.displayName.split(' ')[0];
+        else if (sc?.email)  userName = sc.email.split('@')[0];
+      }catch{}
+      const metodoTxt = optEntrega?.checked ? "Entrega" : "Retirada";
+      const endereco = (metodoTxt === "Entrega")
+        ? `${logradouro?.value || ""}, ${numero?.value || ""} — ${bairro?.value || ""} — ${cidade?.value || ""}/${uf?.value || ""}${complemento?.value ? " ("+complemento.value+")" : ""}`
+        : "—";
+      const eta = etaEl?.textContent || "—";
+      const obsTxt = (obs?.value || "—").trim();
+      const itensTxt = getItensLista().map(it => `• ${it.qtd}x ${it.nome} — ${money(it.preco * it.qtd)}`).join("\n") || "—";
+      const subtotal = $('sumSubtotal')?.textContent?.trim() || "R$ 0,00";
+      const frete    = $('sumFrete')?.textContent?.trim()    || "R$ 0,00";
+      const total    = $('sumTotal')?.textContent?.trim()    || "R$ 0,00";
+      return [
+        "🍔 *Novo pedido — Sabor em Clicks*",
+        order?.id ? `🧾 Pedido: *#${order.id}*` : null,
+        `👤 Cliente: ${userName}`,
+        `📦 Recebimento: ${metodoTxt}`,
+        `📍 Endereço: ${endereco}`,
+        `⏱️ Estimativa: ${eta}`,
+        "",
+        "*Itens:*",
+        itensTxt,
+        "",
+        `Subtotal: ${subtotal}`,
+        `Taxa de entrega: ${frete}`,
+        `*Total: ${total}*`,
+        "",
+        `📝 Observações: ${obsTxt}`,
+        "",
+        "Forma de pagamento: *no local/maquininha*"
+      ].filter(Boolean).join("\n");
+    }
+
+    // ======= Enviar (sem salvar histórico) =======
+    $('btnEnviarWhats')?.addEventListener('click', async ()=>{
+      if (!getCart().length) return alert('Seu carrinho está vazio.');
+      if (!requireVerifiedUser()) return;
+
+      const order = buildOrderObject(); // apenas para compor a mensagem
+      const texto = montarTextoWhats(order);
+      const url   = `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(texto)}`;
+      window.open(url, '_blank');
+
+      const ok = $('ok'); if (ok) ok.style.display = 'block';
+      const loading = $('loading'); if (loading) loading.style.display = 'flex';
+
+      localStorage.removeItem(KEY_CART);
+      localStorage.removeItem('orderNotes');
+      updateCartCount();
+      renderCart();
+      setTimeout(()=>{ window.location.href = 'index.html'; }, 2000);
+    });
+
+    /* ========= Bootstrap inicial ========= */
+    updateCartCount();
+    renderCart();
+    toggleMetodo();
+    setActiveCard();
+
+    /* ========= Cookies bar ========= */
+    const COOKIE_KEY = 'cookiesAccepted_v1';
+    const cookiesBar = document.getElementById('cookies-bar');
+    const showCookiesBar = () => { if (cookiesBar) cookiesBar.style.display = 'block'; };
+    const hideCookiesBar = () => { if (cookiesBar) cookiesBar.style.display = 'none'; };
+    if (!localStorage.getItem(COOKIE_KEY)) showCookiesBar();
+    document.getElementById('acceptCookies')?.addEventListener('click', () => {
+      localStorage.setItem(COOKIE_KEY, '1');
+      hideCookiesBar();
+    });
+  </script>
+
+  <!-- ====== Auth (preenche Entrar/Perfil no header) ====== -->
+  <script type="module" src="auth.firebase.js"></script>
+
+  <!-- ====== Cookies unificado ====== -->
+  <script src="cookies.js" defer></script>
+
+  <!-- ====== Modal de Autenticação ====== -->
+  <div id="authModal" class="modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 id="authTitle" style="margin:0;">Entrar</h3>
+        <button id="authClose" class="btn-ghost">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="authMsg" class="form-error" style="display:none;margin-top:0;"></div>
+
+        <div class="pay-tabs" style="margin-bottom:14px;">
+          <button id="tabEntrar" class="pay-tab">Entrar</button>
+          <button id="tabCadastrar" class="pay-tab is-outlined">Cadastrar</button>
+        </div>
+
+        <!-- Login -->
+        <form id="formLogin" class="field" autocomplete="on">
+          <label for="loginEmail"><strong>E-mail</strong></label>
+          <input id="loginEmail" type="email" autocomplete="email" required>
+          <label for="loginSenha"><strong>Senha</strong></label>
+          <input id="loginSenha" type="password" autocomplete="current-password" required>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+            <a href="#" id="linkForgot" class="help-link" style="font-weight:800">Esqueci minha senha</a>
+          </div>
+          <button class="btn" type="submit" style="margin-top:8px;">Entrar</button>
+          <button class="btn-ghost" id="btnGoogle" type="button" style="margin-top:8px;">Entrar com Google</button>
+        </form>
+
+        <!-- Cadastro -->
+        <form id="formCadastro" class="field hidden" autocomplete="on">
+          <label for="cadNome"><strong>Nome</strong></label>
+          <input id="cadNome" type="text" autocomplete="name">
+          <label for="cadEmail"><strong>E-mail</strong></label>
+          <input id="cadEmail" type="email" autocomplete="email" required>
+          <label for="cadSenha"><strong>Senha</strong></label>
+          <input id="cadSenha" type="password" autocomplete="new-password" required>
+          <button class="btn" type="submit" style="margin-top:8px;">Criar conta</button>
+        </form>
+
+        <!-- Reset de senha -->
+        <div id="viewReset" class="hidden" style="margin-top:10px;">
+          <div class="field">
+            <p><strong>Redefinir senha</strong></p>
+            <input id="resetEmail" type="email" placeholder="seuemail@exemplo.com">
+            <div style="display:flex;gap:8px;margin-top:6px;">
+              <button id="btnResetSend" class="btn">Enviar link</button>
+              <button id="btnResetBack" class="btn-ghost">Voltar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="authLater" class="btn-ghost">Agora não</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner de cookies (fallback) -->
+  <style>
+    .cookies-bar{
+      position: fixed; left: 0; right: 0; bottom: 0;
+      background: var(--dark); color: #fff;
+      padding: 12px 16px; text-align: center;
+      font-size: 14px; z-index: 9999;
+      box-shadow: 0 -6px 14px rgba(0,0,0,.18);
+    }
+    .cookies-bar a{ color: var(--yellow); text-decoration: underline; }
+    .cookies-bar .btn-ghost{
+      background: #fff; color: #111; border-radius: 999px;
+      padding: 6px 12px; cursor: pointer;
+    }
+  </style>
+</body>
+</html>

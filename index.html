@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sabor em Clicks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="home">
+
+  <!-- HEADER -->
+  <header>
+    <nav class="wrap">
+      <h1 class="brand">Sabor em Clicks</h1>
+      <ul>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="cardapio.html">Cardápio</a></li>
+        <li>
+          <a href="carrinho.html" class="cart-link" aria-label="Carrinho">
+            🛒 <span id="cartCount"></span>
+          </a>
+        </li>
+
+        <!-- Conta / Login -->
+        <li class="account" style="position:relative;">
+          <!-- Preenchido pelo auth.firebase.js -->
+          <a href="#" id="accountArea" aria-haspopup="menu" aria-expanded="false">Entrar</a>
+          <!-- Menu dropdown -->
+          <div id="accountMenu" class="hidden"
+               style="position:absolute;right:0;top:34px;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 12px 28px rgba(0,0,0,.18);min-width:180px;overflow:hidden">
+            <a href="perfil.html" style="display:block;padding:10px 12px;color:#111;text-decoration:none">Perfil</a>
+            <a href="#" id="btnLogout" style="display:block;padding:10px 12px;color:#111;text-decoration:none">Sair</a>
+          </div>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="stage" style="margin-top:18px;">
+    <div class="heroCard">
+      <div class="heroCenter">
+        <div>
+          <div class="logoTag">hambúrgueres • batatas • bebidas • sobremesas</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRÉVIA -->
+  <section class="preview">
+    <h2>Prévia do Cardápio</h2>
+    <div class="grid">
+      <article class="card">
+        <div class="pic">
+          <img src="imgs/duplo-bacon.jpg" alt="Duplo Bacon"
+               loading="lazy" decoding="async" style="max-width:100%;height:auto;aspect-ratio:1/1;">
+        </div>
+        <div class="title">Duplo Bacon</div>
+        <div class="price">R$ 24,90</div>
+        <button class="btn" data-item='{"item":"Duplo Bacon","price":24.90,"category":"Sanduíches"}'>Adicionar</button>
+      </article>
+
+      <article class="card">
+        <div class="pic">
+          <img src="imgs/batata-balde.jpg" alt="Batata em Balde"
+               loading="lazy" decoding="async" style="max-width:100%;height:auto;aspect-ratio:1/1;">
+        </div>
+        <div class="title">Batata em Balde</div>
+        <div class="price">R$ 18,90</div>
+        <button class="btn" data-item='{"item":"Batata em Balde","price":18.90,"category":"Acompanhamentos"}'>Adicionar</button>
+      </article>
+
+      <article class="card">
+        <div class="pic">
+          <img src="imgs/coca-cola.jpg" alt="Coca-Cola"
+               loading="lazy" decoding="async" style="max-width:100%;height:auto;aspect-ratio:1/1;">
+        </div>
+        <div class="title">Coca-Cola</div>
+        <div class="price">R$ 9,00</div>
+        <button class="btn" data-item='{"item":"Coca-Cola","price":9.00,"category":"Bebidas"}'>Adicionar</button>
+      </article>
+
+      <article class="card">
+        <div class="pic">
+          <img src="imgs/sundae-morango.jpg" alt="Sundae de Morango"
+               loading="lazy" decoding="async" style="max-width:100%;height:auto;aspect-ratio:1/1;">
+        </div>
+        <div class="title">Sundae de Morango</div>
+        <div class="price">R$ 14,50</div>
+        <button class="btn" data-item='{"item":"Sundae de Morango","price":14.50,"category":"Sobremesas"}'>Adicionar</button>
+      </article>
+    </div>
+    <div class="rowActions">
+      <a class="btn" href="cardapio.html">Ir para o cardápio</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>Endereço: R. Brooklin, 123 - São Paulo, SP</p>
+    <p>Telefone: (11) 97070-8215 • Email: saboremclicks@gmail.com</p>
+    <p>&copy; 2025 Sabor em Clicks. Todos os direitos reservados.</p>
+    <nav class="footer-links">
+      <a href="privacidade.html">Política de Privacidade</a> |
+      <a href="termos.html">Termos de Uso</a> |
+      <a href="trocas.html">Política de Troca/Reembolso</a>
+    </nav>
+  </footer>
+
+  <!-- MODAL LOGIN / CADASTRO / RESET -->
+  <div id="authModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle" style="display:none">
+    <div class="modal" role="document" style="max-width:560px">
+      <div class="modal-header">
+        <h3 id="authTitle" style="margin:0">Entrar</h3>
+        <button id="authClose" class="btn btn-ghost" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <p id="authMsg" class="form-error" style="display:none"></p>
+
+        <div id="authTabs" class="pay-tabs" style="margin-bottom:6px">
+          <button id="tabEntrar" class="pay-tab">Entrar</button>
+          <button id="tabCadastrar" class="pay-tab is-outlined">Cadastrar</button>
+        </div>
+
+        <!-- Botão Google -->
+        <button id="btnGoogle" class="btn-ghost"
+                style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;border:1px solid #ddd">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" width="18" height="18">
+          Entrar com Google
+        </button>
+
+        <!-- Form Entrar -->
+        <form id="formLogin" class="field" autocomplete="on">
+          <label for="loginEmail"><strong>E-mail</strong></label>
+          <input id="loginEmail" type="email" autocomplete="email" required>
+          <label for="loginSenha"><strong>Senha</strong></label>
+          <input id="loginSenha" type="password" autocomplete="current-password" required>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+            <a href="#" id="linkForgot" class="help-link" style="font-weight:800">Esqueci minha senha</a>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top:8px">Entrar</button>
+        </form>
+
+        <!-- Form Cadastrar -->
+        <form id="formCadastro" class="field hidden" autocomplete="on">
+          <label for="cadNome"><strong>Nome</strong></label>
+          <input id="cadNome" type="text" autocomplete="name" required>
+          <label for="cadEmail"><strong>E-mail</strong></label>
+          <input id="cadEmail" type="email" autocomplete="email" required>
+          <label for="cadSenha"><strong>Senha</strong></label>
+          <input id="cadSenha" type="password" autocomplete="new-password" required>
+          <button type="submit" class="btn-primary" style="margin-top:8px">Criar conta</button>
+        </form>
+
+        <!-- View Reset de Senha (mostrada ao clicar no link) -->
+        <div id="viewReset" class="hidden">
+          <div class="field">
+            <p><strong>Redefinir senha</strong></p>
+            <input id="resetEmail" type="email" placeholder="seuemail@exemplo.com">
+            <div style="display:flex;gap:8px;margin-top:6px;">
+              <button id="btnResetSend" class="btn">Enviar link</button>
+              <button id="btnResetBack" class="btn-ghost">Voltar</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- Rodapé removido -->
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    const getCart = () => JSON.parse(localStorage.getItem('cart')) || [];
+    const setCart = c => localStorage.setItem('cart', JSON.stringify(c));
+    const updateCartCount = () => {
+      const n = getCart().length;
+      const el = document.getElementById('cartCount');
+      if (el) el.textContent = n || '';
+    };
+    document.querySelectorAll('.card .btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = JSON.parse(btn.dataset.item);
+        const c = getCart(); c.push(item); setCart(c); updateCartCount();
+        alert(item.item + ' adicionado!');
+      });
+    });
+    updateCartCount();
+  </script>
+
+  <!-- Auth -->
+  <script type="module" src="auth.firebase.js"></script>
+  <script src="cookies.js" defer></script>
+</body>
+</html>

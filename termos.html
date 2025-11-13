@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Termos de Uso - Sabor em Clicks</title>
+  <meta name="description" content="Termos de Uso do Sabor em Clicks — condições para uso do site, realização de pedidos, pagamentos e responsabilidade.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    main{max-width:900px;margin:24px auto;padding:0 16px}
+    h1{margin:0 0 12px}
+    h2{margin:18px 0 8px}
+    p,li{line-height:1.6}
+    .muted{color:#555;font-size:14px}
+    ul{padding-left:18px}
+    /* conta no header */
+    header .account { position: relative; }
+    header .account #accountArea{ display:inline-flex; align-items:center; gap:6px; font-weight:800; color:#fff; text-decoration:none; }
+    header .account .chev{ opacity:.9 }
+    header .account #accountMenu{
+      position:absolute; right:0; top:calc(100% + 6px);
+      background:#fff; color:#111; border:1px solid var(--border); border-radius:12px;
+      padding:8px; min-width:160px; box-shadow:var(--shadow-s);
+    }
+    header .account #accountMenu a{ color:#111; display:block; padding:8px 10px; border-radius:8px; text-decoration:none; }
+    header .account #accountMenu a:hover{ background:#f7f7f7; }
+  </style>
+</head>
+<body>
+  <!-- HEADER com barra vermelha + conta -->
+  <header>
+    <nav class="wrap">
+      <h1 class="brand">Sabor em Clicks</h1>
+      <ul>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="cardapio.html">Cardápio</a></li>
+        <li><a href="carrinho.html">Carrinho</a></li>
+        <li class="account">
+          <a href="#" id="accountArea">Entrar</a>
+          <div id="accountMenu" hidden>
+            <a href="perfil.html">Meu perfil</a>
+            <a href="#" id="logoutLink">Sair</a>
+          </div>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Termos de Uso</h1>
+    <p class="muted">Vigente a partir de <strong>01/10/2025</strong></p>
+
+    <h2>1. Aceite dos termos</h2>
+    <p>Ao acessar e utilizar o site <strong>Sabor em Clicks</strong>, você concorda com estes Termos de Uso e com nossa <a href="privacidade.html">Política de Privacidade</a>.</p>
+
+    <h2>2. Funcionamento do serviço</h2>
+    <ul>
+      <li>O site permite realizar pedidos para <strong>retirada</strong> ou <strong>entrega</strong> conforme disponibilidade local.</li>
+      <li>Valores, taxas e estimativas podem variar por região, horário e demanda.</li>
+    </ul>
+
+    <h2>3. Pedidos e pagamentos</h2>
+    <ul>
+      <li>Os pedidos são confirmados após a validação do pagamento (PIX) ou autorização da operadora (cartão).</li>
+      <li>Em caso de divergência, entraremos em contato pelo e-mail/telefone informado.</li>
+      <li>Dados de cartão são processados por provedores de pagamento e não ficam armazenados pelo Sabor em Clicks.</li>
+    </ul>
+
+    <h2>4. Cancelamentos, trocas e reembolsos</h2>
+    <p>As regras específicas estão descritas na <a href="trocas.html">Política de Troca e Reembolso</a>.</p>
+
+    <h2>5. Uso do site</h2>
+    <ul>
+      <li>É proibido usar o site para atividades ilícitas, tentativas de invasão ou coleta indevida de dados.</li>
+      <li>Conteúdos (textos, imagens e marcas) são protegidos por direitos autorais e não podem ser reproduzidos sem autorização.</li>
+    </ul>
+
+    <h2>6. Responsabilidades</h2>
+    <ul>
+      <li>Empregamos medidas para manter o site disponível, mas podemos realizar manutenções ou sofrer indisponibilidades.</li>
+      <li>Não nos responsabilizamos por indisponibilidades de terceiros (provedores de pagamento, internet, serviços de entrega externos etc.).</li>
+    </ul>
+
+    <h2>7. Cadastro e conta</h2>
+    <ul>
+      <li>Você é responsável pela veracidade dos dados fornecidos e por manter suas credenciais em sigilo.</li>
+      <li>Podemos suspender contas em caso de uso indevido do serviço.</li>
+    </ul>
+
+    <h2>8. Alterações destes termos</h2>
+    <p>Podemos atualizar estes Termos. A versão vigente será publicada nesta página com a data de vigência.</p>
+
+    <h2>9. Contato</h2>
+    <p>Dúvidas? <a href="mailto:saboremclicks@gmail.com">saboremclicks@gmail.com</a></p>
+  </main>
+
+  <footer>
+    <p>Endereço: R. Brooklin, 123 - São Paulo, SP</p>
+    <p>Telefone: (11) 97070-8215 • Email: saboremclicks@gmail.com</p>
+    <p>&copy; 2025 Sabor em Clicks. Todos os direitos reservados.</p>
+    <nav class="footer-links" style="margin-top:8px">
+      <a href="privacidade.html">Política de Privacidade</a> |
+      <a href="termos.html">Termos de Uso</a> |
+      <a href="trocas.html">Política de Troca/Reembolso</a>
+    </nav>
+  </footer>
+
+  <!-- Banner de Cookies -->
+  <div id="cookies-bar" class="cookies-bar" style="display:none;">
+    Usamos cookies para melhorar sua experiência. Ao continuar, você concorda com nossa
+    <a href="privacidade.html" style="color:#ffcc00;">Política de Privacidade</a>.
+    <button id="acceptCookies" class="btn-ghost" style="margin-left:12px;border:1px solid #fff;">Aceitar</button>
+  </div>
+
+  <!-- Modal de Autenticação (compatível com auth.firebase.js) -->
+  <div id="authModal" class="modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 id="authTitle" style="margin:0;">Entrar</h3>
+        <button id="authClose" class="btn-ghost">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="authMsg" class="form-error" style="display:none;margin-top:0;"></div>
+
+        <div class="pay-tabs" style="margin-bottom:14px;">
+          <button id="tabEntrar" class="pay-tab">Entrar</button>
+          <button id="tabCadastrar" class="pay-tab is-outlined">Cadastrar</button>
+        </div>
+
+        <!-- Login -->
+        <form id="formLogin" class="field">
+          <label><strong>E-mail</strong></label>
+          <input id="loginEmail" type="email" placeholder="voce@email.com" required>
+
+          <label><strong>Senha</strong></label>
+          <input id="loginSenha" type="password" placeholder="••••••••" required>
+
+          <button class="btn" type="submit" style="margin-top:8px;">Entrar</button>
+          <button class="btn-ghost" id="btnGoogle" type="button" style="margin-top:8px;">Entrar com Google</button>
+        </form>
+
+        <!-- Cadastro -->
+        <form id="formCadastro" class="field hidden">
+          <label><strong>Nome</strong></label>
+          <input id="cadNome" type="text" placeholder="Seu nome completo">
+
+          <label><strong>E-mail</strong></label>
+          <input id="cadEmail" type="email" placeholder="voce@email.com" required>
+
+          <label><strong>Senha</strong></label>
+          <input id="cadSenha" type="password" placeholder="Mínimo 6 caracteres" required>
+
+          <button class="btn" type="submit" style="margin-top:8px;">Criar conta</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="authLater" class="btn-ghost">Agora não</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cookies (banner) -->
+  <script>
+    const COOKIE_KEY='cookiesAccepted_v1';
+    const cookiesBar=document.getElementById('cookies-bar');
+    const showCookiesBar=()=>{ if(cookiesBar) cookiesBar.style.display='block'; };
+    const hideCookiesBar=()=>{ if(cookiesBar) cookiesBar.style.display='none'; };
+    if(!localStorage.getItem(COOKIE_KEY)) showCookiesBar();
+    document.getElementById('acceptCookies')?.addEventListener('click',()=>{
+      localStorage.setItem(COOKIE_KEY,'1'); hideCookiesBar();
+    });
+  </script>
+
+  <!-- Firebase Auth + header dinâmico -->
+  <script type="module" src="auth.firebase.js"></script>
+</body>
+</html>

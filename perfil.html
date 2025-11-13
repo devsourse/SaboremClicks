@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Perfil do Usuário - Sabor em Clicks</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .notice {background:#fff3cd;color:#664d03;border:1px solid #ffecb5;padding:10px;border-radius:6px;margin:10px 0;}
+    .btn-danger {background:#d32f2f;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;}
+    .btn-secondary {background:#eee;color:#111;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;}
+    .muted {color:#666;font-size:13px;margin-top:6px;}
+
+    .modal-light{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:9999;}
+    .modal-light .box{background:#fff;padding:20px;border-radius:12px;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);}
+    .modal-light .box h3{margin-top:0}
+    .field-sm{display:grid;gap:6px;margin-bottom:10px}
+    .field-sm input{padding:10px 12px;border:1px solid #ddd;border-radius:10px;font:inherit}
+    .row-end{display:flex;gap:8px;justify-content:flex-end}
+  </style>
+</head>
+<body class="perfil">
+  <header>
+    <nav class="wrap">
+      <h1 class="brand">Sabor em Clicks</h1>
+      <ul>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="cardapio.html">Cardápio</a></li>
+        <li>
+          <a href="carrinho.html" class="cart-link" aria-label="Carrinho">
+            🛒 <span id="cartCount"></span>
+          </a>
+        </li>
+        <li><a href="perfil.html" class="active">Perfil</a></li>
+        <li><a href="#" id="logoutBtn">Sair</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="wrap" style="margin-top:18px;">
+    <h2>Meu Perfil</h2>
+
+    <div id="verifyNotice" class="notice hidden" role="alert" aria-live="polite">
+      Seu e-mail ainda não foi verificado.
+      <button id="btnResend" class="btn-secondary" style="margin-left:8px;">Reenviar verificação</button>
+    </div>
+
+    <section class="perfil-section">
+      <h3>Dados Pessoais</h3>
+      <div id="userData">
+        <p><strong>Nome:</strong> <span id="userName"></span></p>
+        <p><strong>Email:</strong> <span id="userEmail"></span></p>
+      </div>
+    </section>
+
+    <section class="perfil-section">
+      <h3>Endereço de Entrega</h3>
+      <form id="addressForm" class="field" autocomplete="on">
+        <input type="text" id="endereco" placeholder="Rua, nº, complemento" required>
+        <input type="text" id="cidade" placeholder="Cidade" required>
+        <input type="text" id="cep" placeholder="CEP (00000-000)" inputmode="numeric" maxlength="9" required>
+        <button type="submit" class="btn">Salvar Endereço</button>
+      </form>
+      <div id="savedAddress" class="empty" style="margin-top:10px;"></div>
+    </section>
+
+    <section class="perfil-section" id="secSeguranca" style="display:none;">
+      <h3>Segurança</h3>
+      <p class="muted">Opções disponíveis para contas criadas com e-mail e senha.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="btnResetPwd" class="btn-secondary">Enviar link de redefinição por e-mail</button>
+        <button id="btnChangePwd" class="btn-secondary">Trocar senha agora</button>
+      </div>
+      <div id="resetHint" class="muted" style="display:none;">Verifique sua caixa de entrada (e o spam). O link expira após algum tempo.</div>
+    </section>
+
+    <section class="perfil-section">
+      <h3>Configurações</h3>
+      <button id="btnDelete" class="btn-danger">Excluir minha conta</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Sabor em Clicks</p>
+  </footer>
+
+  <!-- Modal de reautenticação -->
+  <div id="reauthModal" class="modal-light" role="dialog" aria-modal="true" aria-labelledby="reauthTitle">
+    <div class="box">
+      <h3 id="reauthTitle">Confirmar identidade</h3>
+      <p>Digite sua senha para excluir a conta:</p>
+      <div class="field-sm">
+        <label>Senha atual</label>
+        <input type="password" id="reauthPass" placeholder="Senha">
+      </div>
+      <div class="row-end">
+        <button id="reauthCancel" class="btn-secondary">Cancelar</button>
+        <button id="reauthConfirm" class="btn-danger">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de troca de senha -->
+  <div id="pwdModal" class="modal-light" role="dialog" aria-modal="true" aria-labelledby="pwdTitle">
+    <div class="box">
+      <h3 id="pwdTitle">Trocar senha</h3>
+      <div class="field-sm">
+        <label>Senha atual</label>
+        <input type="password" id="pwdCurr" placeholder="Digite sua senha atual">
+      </div>
+      <div class="field-sm">
+        <label>Nova senha</label>
+        <input type="password" id="pwdNew" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div class="field-sm">
+        <label>Confirmar nova senha</label>
+        <input type="password" id="pwdNew2" placeholder="Repita a nova senha">
+      </div>
+      <div class="row-end">
+        <button id="pwdCancel" class="btn-secondary">Cancelar</button>
+        <button id="pwdSave" class="btn">Salvar nova senha</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Perfil (sem histórico) -->
+  <script type="module">
+    import { getLocalUser, doSignOut, getUserDoc, updateUserDoc } from './auth.firebase.js';
+
+    const $ = (id) => document.getElementById(id);
+    const maskCEP = (v)=>{ let d=(v||'').replace(/\D/g,'').slice(0,8); if(d.length>5) d=d.slice(0,5)+'-'+d.slice(5); return d; };
+
+    function updateCartCount() {
+      try {
+        const c = JSON.parse(localStorage.getItem('cart') || '[]');
+        const el = $('cartCount');
+        if (el) el.textContent = c.length || '';
+      } catch {}
+    }
+    function toggleSecuritySection(local){
+      const isPassword = (local?.provider || 'password').includes('password');
+      $('secSeguranca').style.display = isPassword ? '' : 'none';
+    }
+    function showVerifyNoticeIfNeeded(local){
+      const isPassword = (local?.provider || 'password').includes('password');
+      const unverified = !local?.emailVerified;
+      const box = $('verifyNotice');
+      if (!box) return;
+      if (isPassword && unverified) box.classList.remove('hidden');
+      else box.classList.add('hidden');
+    }
+
+    async function boot() {
+      updateCartCount();
+
+      const local = getLocalUser();
+      if (!local) { window.location.href = 'index.html'; return; }
+
+      $('userName').textContent  = local.displayName || 'Usuário';
+      $('userEmail').textContent = local.email || '';
+
+      toggleSecuritySection(local);
+      showVerifyNoticeIfNeeded(local);
+
+      try {
+        const doc = await getUserDoc(local.uid);
+        if (doc && Array.isArray(doc.addresses) && doc.addresses[0]) {
+          const a = doc.addresses[0];
+          $('savedAddress').textContent =
+            `${a.endereco || ''}, ${a.cidade || ''} - CEP: ${a.cep || ''}`.trim();
+        }
+      } catch {}
+
+      $('logoutBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { await doSignOut(); } catch {}
+        window.location.href = 'index.html';
+      });
+
+      $('addressForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const endereco = $('endereco').value.trim();
+        const cidade   = $('cidade').value.trim();
+        const cep      = maskCEP($('cep').value);
+        const payload = { addresses: [{ endereco, cidade, cep }] };
+        try { await updateUserDoc(local.uid, payload); } catch {}
+        $('savedAddress').textContent = `${endereco}, ${cidade} - CEP: ${cep}`;
+        e.target.reset();
+      });
+      $('cep').addEventListener('input', () => {
+        $('cep').value = maskCEP($('cep').value);
+      });
+
+      // Segurança
+      $('btnResetPwd')?.addEventListener('click', async ()=>{
+        const btn = $('btnResetPwd');
+        const hint = $('resetHint');
+        btn.disabled = true; btn.textContent = 'Enviando...';
+        try { await window.sendPasswordReset?.(local.email); hint.style.display=''; }
+        finally { btn.disabled=false; btn.textContent='Enviar link de redefinição por e-mail'; }
+      });
+
+      $('btnChangePwd')?.addEventListener('click', ()=>{
+        $('pwdCurr').value=''; $('pwdNew').value=''; $('pwdNew2').value='';
+        $('pwdModal').style.display='flex';
+        $('pwdCurr').focus();
+      });
+      $('pwdCancel')?.addEventListener('click', ()=> $('pwdModal').style.display='none');
+      $('pwdSave')?.addEventListener('click', async ()=>{
+        const curr = $('pwdCurr').value.trim();
+        const n1   = $('pwdNew').value.trim();
+        const n2   = $('pwdNew2').value.trim();
+        if (!curr || !n1 || !n2) return alert('Preencha todos os campos.');
+        if (n1.length < 6)       return alert('A nova senha deve ter pelo menos 6 caracteres.');
+        if (n1 !== n2)           return alert('A confirmação não confere.');
+        const btn = $('pwdSave'); btn.disabled = true; btn.textContent = 'Salvando...';
+        try { await window.changePasswordWithCurrent?.(local.email, curr, n1); }
+        finally { btn.disabled = false; btn.textContent = 'Salvar nova senha'; $('pwdModal').style.display='none'; }
+      });
+
+      // Reautenticação para exclusão
+      window.addEventListener('need-reauth', ()=>{
+        $('reauthModal').style.display='flex';
+        $('reauthPass').value = '';
+        $('reauthPass').focus();
+      });
+      $('reauthCancel')?.addEventListener('click', ()=> $('reauthModal').style.display='none');
+      $('reauthConfirm')?.addEventListener('click', ()=>{
+        const pass = $('reauthPass').value.trim();
+        const l = getLocalUser();
+        if (l?.email && pass) window.reauthWithPasswordAndDelete(l.email, pass);
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else {
+      boot();
+    }
+
+    // aviso de verificação dinâmico
+    window.addEventListener('auth:state', (ev)=>{
+      const verified = !!ev.detail?.emailVerified;
+      const provider = ev.detail?.user?.provider || 'password';
+      const isPassword = String(provider).includes('password');
+      const box = $('verifyNotice');
+      if (!box) return;
+      if (isPassword && !verified) box.classList.remove('hidden');
+      else box.classList.add('hidden');
+    });
+
+    $('btnResend')?.addEventListener('click', ()=> window.resendVerificationEmail?.() );
+    $('btnDelete')?.addEventListener('click', ()=> window.deleteMyAccount?.() );
+  </script>
+</body>
+</html>

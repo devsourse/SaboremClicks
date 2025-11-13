@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Política de Troca e Reembolso - Sabor em Clicks</title>
+  <meta name="description" content="Política de Troca e Reembolso do Sabor em Clicks — saiba seus direitos, prazos e como solicitar estorno ou refação.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    main{max-width:900px;margin:24px auto;padding:0 16px}
+    h1{margin:0 0 12px}
+    h2{margin:18px 0 8px}
+    p,li{line-height:1.6}
+    .muted{color:#555;font-size:14px}
+    ul{padding-left:18px}
+    /* conta no header */
+    header .account{position:relative}
+    header .account #accountArea{display:inline-flex;align-items:center;gap:6px;font-weight:800;color:#fff;text-decoration:none}
+    header .account .chev{opacity:.9}
+    header .account #accountMenu{
+      position:absolute;right:0;top:calc(100% + 6px);
+      background:#fff;color:#111;border:1px solid var(--border);border-radius:12px;
+      padding:8px;min-width:160px;box-shadow:var(--shadow-s)
+    }
+    header .account #accountMenu a{color:#111;display:block;padding:8px 10px;border-radius:8px;text-decoration:none}
+    header .account #accountMenu a:hover{background:#f7f7f7}
+  </style>
+</head>
+<body>
+  <!-- HEADER com barra vermelha + conta -->
+  <header>
+    <nav class="wrap">
+      <h1 class="brand">Sabor em Clicks</h1>
+      <ul>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="cardapio.html">Cardápio</a></li>
+        <li><a href="carrinho.html" class="cart-link" aria-label="Carrinho">🛒 <span id="cartCount"></span></a></li>
+        <li class="account">
+          <a href="#" id="accountArea">Entrar</a>
+          <div id="accountMenu" hidden>
+            <a href="perfil.html">Meu perfil</a>
+            <a href="#" id="logoutLink">Sair</a>
+          </div>
+        </li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Política de Troca e Reembolso</h1>
+    <p class="muted">Vigente a partir de <strong>01/10/2025</strong></p>
+
+    <h2>1. Arrependimento (7 dias)</h2>
+    <p>Para compras on-line, você pode exercer o direito de arrependimento em até <strong>7 dias</strong> a partir do recebimento, conforme o CDC. Itens perecíveis consumidos total/parcialmente podem limitar o reembolso — analisamos caso a caso.</p>
+
+    <h2>2. Pedido com problema</h2>
+    <p>Se algo vier errado (item trocado, faltando, embalagem danificada ou qualidade fora do padrão), avise em até <strong>24 horas</strong> após o recebimento/retirada para avaliarmos troca, refação, crédito ou reembolso.</p>
+
+    <h2>3. Como solicitar</h2>
+    <ul>
+      <li>Envie e-mail para <a href="mailto:saboremclicks@gmail.com">saboremclicks@gmail.com</a> com número do pedido, fotos (se houver) e relato do ocorrido.</li>
+      <li>Pedidos feitos por parceiros (marketplaces) podem exigir contato pelo próprio app, conforme regras do parceiro.</li>
+    </ul>
+
+    <h2>4. Reembolsos</h2>
+    <ul>
+      <li><strong>PIX:</strong> crédito para a mesma chave informada.</li>
+      <li><strong>Cartão:</strong> estorno conforme prazos da operadora/bandeira, podendo aparecer em faturas seguintes.</li>
+    </ul>
+
+    <h2>5. Situações não reembolsáveis</h2>
+    <ul>
+      <li>Impropriedade decorrente de armazenamento inadequado (ex.: falta de refrigeração após entrega).</li>
+      <li>Prazos de reclamação expirados.</li>
+      <li>Preferência pessoal sem defeito ou divergência mínima esperada entre fotos ilustrativas e produto real.</li>
+    </ul>
+
+    <h2>6. Entrega e atrasos</h2>
+    <p>Estimativas podem variar por clima, trânsito e demanda. Se o atraso comprometer a qualidade/propósito, buscaremos a solução mais justa (refação, crédito ou reembolso proporcional).</p>
+
+    <h2>7. Atualizações</h2>
+    <p>Podemos ajustar esta política; a versão vigente fica publicada aqui com a data atualizada.</p>
+  </main>
+
+  <footer>
+    <p>Endereço: R. Brooklin, 123 - São Paulo, SP</p>
+    <p>Telefone: (11) 97070-8215 • Email: saboremclicks@gmail.com</p>
+    <p>&copy; 2025 Sabor em Clicks. Todos os direitos reservados.</p>
+    <nav class="footer-links" style="margin-top:8px">
+      <a href="privacidade.html">Política de Privacidade</a> |
+      <a href="termos.html">Termos de Uso</a> |
+      <a href="trocas.html">Política de Troca/Reembolso</a>
+    </nav>
+  </footer>
+
+  <!-- Banner de Cookies -->
+  <div id="cookies-bar" class="cookies-bar" style="display:none">
+    Usamos cookies para melhorar sua experiência. Ao continuar, você concorda com nossa
+    <a href="privacidade.html" style="color:#ffcc00">Política de Privacidade</a>.
+    <button id="acceptCookies" class="btn-ghost" style="margin-left:12px;border:1px solid #fff">Aceitar</button>
+  </div>
+
+  <!-- Modal de Autenticação (compatível com auth.firebase.js) -->
+  <div id="authModal" class="modal-backdrop" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 id="authTitle" style="margin:0;">Entrar</h3>
+        <button id="authClose" class="btn-ghost">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="authMsg" class="form-error" style="display:none;margin-top:0;"></div>
+
+        <div class="pay-tabs" style="margin-bottom:14px;">
+          <button id="tabEntrar" class="pay-tab">Entrar</button>
+          <button id="tabCadastrar" class="pay-tab is-outlined">Cadastrar</button>
+        </div>
+
+        <!-- Login -->
+        <form id="formLogin" class="field">
+          <label><strong>E-mail</strong></label>
+          <input id="loginEmail" type="email" placeholder="voce@email.com" required>
+
+          <label><strong>Senha</strong></label>
+          <input id="loginSenha" type="password" placeholder="••••••••" required>
+
+          <button class="btn" type="submit" style="margin-top:8px;">Entrar</button>
+          <button class="btn-ghost" id="btnGoogle" type="button" style="margin-top:8px;">Entrar com Google</button>
+        </form>
+
+        <!-- Cadastro -->
+        <form id="formCadastro" class="field hidden">
+          <label><strong>Nome</strong></label>
+          <input id="cadNome" type="text" placeholder="Seu nome completo">
+
+          <label><strong>E-mail</strong></label>
+          <input id="cadEmail" type="email" placeholder="voce@email.com" required>
+
+          <label><strong>Senha</strong></label>
+          <input id="cadSenha" type="password" placeholder="Mínimo 6 caracteres" required>
+
+          <button class="btn" type="submit" style="margin-top:8px;">Criar conta</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="authLater" class="btn-ghost">Agora não</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contador do carrinho (mínimo) -->
+  <script>
+    const KEY='cart';
+    const getCart=()=>{try{return JSON.parse(localStorage.getItem(KEY))||[]}catch{return[]}};
+    (function(){const el=document.getElementById('cartCount'); if(el) el.textContent=getCart().length||''})();
+  </script>
+
+  <!-- Cookies (banner) -->
+  <script src="cookies.js" defer></script>
+
+  <!-- Firebase Auth + header dinâmico -->
+  <script type="module" src="auth.firebase.js"></script>
+</body>
+</html>
