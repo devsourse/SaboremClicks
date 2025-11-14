@@ -1,1 +1,1 @@
-git remote set-url origin https://github.com/usuario/SaboremClicks.git
+git remote set-url origin https://github.com/devsourse/SaboremClicks.git
